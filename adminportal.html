@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EduMark — Administration Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f4f5f8; --white:#ffffff; --surf:#eef0f5; --surf2:#e8eaf0;
+  --border:#dde0ea; --border2:#c8ccd8;
+  --navy:#0f1f3d; --navy2:#162542; --navy3:#1d2f4f;
+  --blue:#1d4ed8; --blue-light:#eff4ff; --blue-dim:rgba(29,78,216,.1);
+  --red:#b91c1c; --red-bg:#fef2f2; --red-dim:rgba(185,28,28,.1);
+  --green:#15803d; --green-bg:#f0fdf4; --green-dim:rgba(21,128,61,.1);
+  --amber:#b45309; --amber-bg:#fffbeb; --amber-dim:rgba(180,83,9,.1);
+  --purple:#6d28d9; --purple-bg:#f5f3ff;
+  --text:#0d1117; --text2:#4b5563; --text3:#9ca3af;
+  --fo:'IBM Plex Sans',sans-serif; --fm:'IBM Plex Mono',monospace;
+  --r:5px; --r2:8px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.06);
+  --shadow:0 4px 12px rgba(0,0,0,.08); --shadow-lg:0 16px 48px rgba(0,0,0,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fo);min-height:100vh;display:flex;flex-direction:column;font-size:14px;line-height:1.6}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surf)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── LOGIN ── */
+#login-page{flex:1;display:flex;min-height:100vh}
+.ll{width:380px;flex-shrink:0;background:var(--navy);padding:3rem;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.ll::before{content:'';position:absolute;bottom:-80px;left:-80px;width:320px;height:320px;border:1px solid rgba(255,255,255,.04);border-radius:50%}
+.ll::after{content:'';position:absolute;bottom:-120px;left:-120px;width:440px;height:440px;border:1px solid rgba(255,255,255,.025);border-radius:50%}
+.ll::before,.ll::after{pointer-events:none}
+.ll-top{position:relative;z-index:1}
+.ll-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.3rem .7rem;font-family:var(--fm);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:2rem}
+.ll-badge::before{content:'⬤';font-size:.35rem;color:rgba(255,255,255,.3)}
+.ll h2{font-size:1.7rem;font-weight:700;color:#fff;line-height:1.25;margin-bottom:.75rem;letter-spacing:-.02em}
+.ll p{font-size:.82rem;color:rgba(255,255,255,.4);line-height:1.75;font-weight:400}
+.ll-features{margin-top:2rem;border-top:1px solid rgba(255,255,255,.07);padding-top:1.5rem;display:flex;flex-direction:column;gap:.75rem}
+.ll-feat{display:flex;align-items:flex-start;gap:.75rem;font-size:.78rem;color:rgba(255,255,255,.45);line-height:1.5}
+.ll-feat-ico{font-size:.85rem;flex-shrink:0;margin-top:.1rem}
+.ll-footer{font-family:var(--fm);font-size:.58rem;color:rgba(255,255,255,.18);letter-spacing:.06em;text-transform:uppercase;position:relative;z-index:1}
+.lr{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg)}
+.lr-inner{width:100%;max-width:360px}
+.lr-inner h3{font-size:1.25rem;font-weight:700;margin-bottom:.25rem;letter-spacing:-.02em}
+.lr-inner>p{font-size:.83rem;color:var(--text2);margin-bottom:2rem;line-height:1.6}
+
+/* ── FIELDS ── */
+.field{margin-bottom:1rem}
+.field label{display:block;font-family:var(--fm);font-size:.62rem;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.38rem}
+.field input,.field select{width:100%;border:1px solid var(--border);border-radius:var(--r);padding:.6rem .9rem;font-family:var(--fo);font-size:.9rem;color:var(--text);background:var(--white);outline:none;transition:all .15s}
+.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-dim)}
+.field select option{background:var(--white)}
+.field small{display:block;font-family:var(--fm);font-size:.62rem;color:var(--text3);margin-top:.3rem}
+.err{font-family:var(--fm);font-size:.68rem;color:var(--red);margin-top:.4rem;min-height:1em}
+
+/* ── BUTTONS ── */
+.btn-login{width:100%;background:var(--navy);color:#fff;border:none;border-radius:var(--r);padding:.72rem;font-family:var(--fo);font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:background .15s;margin-top:.6rem}
+.btn-login:hover{background:var(--navy3)}
+.btn-login:disabled{opacity:.5;cursor:default}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.32rem;padding:.4rem .88rem;border-radius:var(--r);font-family:var(--fo);font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1a44c2}
+.btn-outline{background:var(--white);border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+.btn-danger{background:var(--white);border:1px solid rgba(185,28,28,.25);color:var(--red)}
+.btn-danger:hover{background:var(--red-bg)}
+.btn-sm{padding:.28rem .68rem;font-size:.72rem}
+.btn-xs{padding:.18rem .52rem;font-size:.68rem}
+.btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+
+/* ── APP ── */
+#app{flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--navy);height:54px;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-l{display:flex;align-items:center;gap:.9rem}
+.tb-logo{font-size:.95rem;font-weight:700;color:#fff;letter-spacing:-.02em}
+.tb-pipe{width:1px;height:16px;background:rgba(255,255,255,.15)}
+.tb-sec{font-family:var(--fm);font-size:.58rem;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase}
+.tb-r{display:flex;align-items:center;gap:.75rem}
+.tb-name{font-size:.78rem;color:rgba(255,255,255,.55)}
+.tb-adm-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);font-family:var(--fm);font-size:.58rem;color:rgba(255,255,255,.65);padding:.17rem .55rem;border-radius:3px;letter-spacing:.07em;text-transform:uppercase}
+.btn-so{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.6);padding:.27rem .75rem;border-radius:4px;font-family:var(--fo);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-so:hover{background:rgba(255,255,255,.16)}
+
+/* ── SIDEBAR ── */
+.app-body{display:flex;flex:1}
+.sidebar{width:220px;background:var(--white);border-right:1px solid var(--border);flex-shrink:0;padding:.8rem;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;display:flex;flex-direction:column}
+.sb-lbl{font-family:var(--fm);font-size:.58rem;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);padding:0 .5rem;margin:.6rem 0 .35rem}
+.sb-item{display:flex;align-items:center;gap:.55rem;padding:.46rem .68rem;border-radius:var(--r2);font-size:.84rem;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s}
+.sb-item .ico{width:17px;text-align:center;font-size:.88rem}
+.sb-item:hover{background:var(--surf);color:var(--text)}
+.sb-item.active{background:var(--blue-light);color:var(--blue);font-weight:600}
+.sb-count{margin-left:auto;background:var(--surf);border:1px solid var(--border);border-radius:99px;font-family:var(--fm);font-size:.62rem;padding:.04rem .42rem;color:var(--text3)}
+.sb-item.active .sb-count{background:var(--blue-dim);border-color:rgba(29,78,216,.2);color:var(--blue)}
+.main{flex:1;padding:1.8rem;overflow-x:hidden}
+
+/* ── PAGE HEADER ── */
+.pg-hd{margin-bottom:1.4rem}
+.pg-hd h2{font-size:1.2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.2rem}
+.pg-hd p{font-size:.8rem;color:var(--text2)}
+.sec-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem}
+
+/* ── STAT CARDS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.7rem;margin-bottom:1.4rem}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:.9rem 1.1rem;box-shadow:var(--shadow-sm)}
+.stat .sv{font-size:1.75rem;font-weight:700;letter-spacing:-.04em;line-height:1}
+.stat .sl{font-family:var(--fm);font-size:.6rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-top:.25rem;font-weight:500}
+
+/* ── TABLE CARD ── */
+.tbl-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow-sm);overflow:hidden}
+.tbl-hd{padding:.8rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.tbl-hd h3{font-size:.88rem;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead th{background:var(--surf);padding:.52rem 1.2rem;text-align:left;font-family:var(--fm);font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:.09em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap}
+th.c{text-align:center}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surf)}
+td{padding:.62rem 1.2rem;vertical-align:middle}
+td.c{text-align:center}
+
+/* ── TAGS ── */
+.tag{display:inline-block;padding:.14rem .52rem;border-radius:4px;font-family:var(--fm);font-size:.68rem;font-weight:500;letter-spacing:.01em}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-red{background:var(--red-bg);color:var(--red)}
+.tag-amber{background:var(--amber-bg);color:var(--amber)}
+.tag-blue{background:var(--blue-light);color:var(--blue)}
+.tag-purple{background:var(--purple-bg);color:var(--purple)}
+.tag-gray{background:var(--surf2);color:var(--text2);border:1px solid var(--border)}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(15,31,61,.5);display:flex;align-items:center;justify-content:center;z-index:300;padding:1rem;backdrop-filter:blur(2px)}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:1.8rem;width:100%;max-width:460px;box-shadow:var(--shadow-lg)}
+.modal h3{font-size:1rem;font-weight:700;margin-bottom:.2rem}
+.modal p.ms{font-size:.8rem;color:var(--text2);margin-bottom:1.2rem;line-height:1.6}
+.modal-foot{display:flex;gap:.5rem;margin-top:1.1rem}
+
+/* ── ENROLL GRID ── */
+.en-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;max-width:740px}
+.en-box{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:1.3rem;box-shadow:var(--shadow-sm)}
+.en-box h4{font-size:.88rem;font-weight:700;margin-bottom:1rem}
+
+/* ── MISC ── */
+.spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .6s linear infinite;display:inline-block}
+.loading{display:flex;align-items:center;justify-content:center;padding:3.5rem;gap:.7rem;color:var(--text2);font-family:var(--fm);font-size:.78rem}
+.empty{text-align:center;padding:3.5rem 2rem;color:var(--text2)}
+.empty .ei{font-size:2.2rem;margin-bottom:.7rem}
+.empty p{font-size:.8rem}
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--text);color:#fff;padding:.65rem 1.1rem;border-radius:var(--r2);font-family:var(--fm);font-size:.74rem;z-index:999;transform:translateY(60px);opacity:0;transition:all .3s ease;max-width:300px;box-shadow:var(--shadow)}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok{background:var(--green)}
+#toast.err{background:var(--red)}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes su{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.su{animation:su .22s ease both}
+@media(max-width:780px){.ll{display:none}.sidebar{display:none}.main{padding:1rem}.topbar{padding:0 1rem}}
+</style>
+</head>
+<body>
+
+<div id="login-page">
+  <div class="ll">
+    <div class="ll-top">
+      <div class="ll-badge">⚙️ Administration Console</div>
+      <h2>EduMark Admin Panel</h2>
+      <p>Restricted to authorized administrators. This portal allows complete management of students, teachers, subjects, and enrollment records.</p>
+      <div class="ll-features">
+        <div class="ll-feat"><span class="ll-feat-ico">👥</span>Create and manage student accounts and enrollment</div>
+        <div class="ll-feat"><span class="ll-feat-ico">📋</span>Assign teachers to subjects and manage their access</div>
+        <div class="ll-feat"><span class="ll-feat-ico">📚</span>Configure curriculum subjects for the programme</div>
+        <div class="ll-feat"><span class="ll-feat-ico">🔒</span>Reset passwords and manage account security</div>
+      </div>
+    </div>
+    <div class="ll-footer">EduMark · Administration · Restricted Access</div>
+  </div>
+  <div class="lr">
+    <div class="lr-inner">
+      <h3>Administrator Sign In</h3>
+      <p>Enter your administrator credentials to access the management console.</p>
+      <div class="field"><label>Email Address</label><input id="al-email" type="email" placeholder="admin@example.com"/></div>
+      <div class="field"><label>Password</label><input id="al-pw" type="password" placeholder="••••••••"/></div>
+      <div id="al-err" class="err"></div>
+      <button class="btn-login" id="al-btn" onclick="doLogin()">Access Administration Console</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden" style="flex:1;display:flex;flex-direction:column;min-height:100vh">
+  <div class="topbar">
+    <div class="tb-l">
+      <span class="tb-logo">EduMark</span>
+      <div class="tb-pipe"></div>
+      <span class="tb-sec">Administration Console</span>
+    </div>
+    <div class="tb-r">
+      <span class="tb-name" id="a-name"></span>
+      <span class="tb-adm-badge">Administrator</span>
+      <button class="btn-so" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="app-body" style="flex:1">
+    <div class="sidebar">
+      <div class="sb-lbl">Management</div>
+      <button class="sb-item active" id="nav-students" onclick="navTo('students')"><span class="ico">👥</span>Students<span class="sb-count" id="cnt-s">—</span></button>
+      <button class="sb-item" id="nav-teachers" onclick="navTo('teachers')"><span class="ico">📋</span>Teachers<span class="sb-count" id="cnt-t">—</span></button>
+      <button class="sb-item" id="nav-subjects" onclick="navTo('subjects')"><span class="ico">📚</span>Subjects<span class="sb-count" id="cnt-sub">—</span></button>
+      <button class="sb-item" id="nav-enroll" onclick="navTo('enroll')"><span class="ico">🔗</span>Enrollments</button>
+    </div>
+    <div class="main" id="a-main"></div>
+  </div>
+</div>
+
+<div id="modal-ov" class="modal-ov hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-body"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://atyrinncjaijcditeimo.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eXJpbm5jamFpamNkaXRlaW1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjc2MzMsImV4cCI6MjA4NzcwMzYzM30.2NRtNqLMjUtxs91_p5CLlQwrLz2E4-dCc4ZqTqsg8XI';
+const{createClient}=supabase;const db=createClient(SUPABASE_URL,SUPABASE_ANON);
+let me=null,cur='students',_tt;
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className=`show ${type}`;clearTimeout(_tt);_tt=setTimeout(()=>el.className='',3200)}
+function openModal(h){document.getElementById('modal-body').innerHTML=h;document.getElementById('modal-ov').classList.remove('hidden')}
+function closeModal(){document.getElementById('modal-ov').classList.add('hidden')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+async function doLogin(){
+  const email=document.getElementById('al-email').value.trim(),pw=document.getElementById('al-pw').value;
+  const err=document.getElementById('al-err');err.textContent='';
+  if(!email||!pw){err.textContent='Fill all fields.';return}
+  const btn=document.getElementById('al-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Authenticating…';
+  const{error}=await db.auth.signInWithPassword({email,password:pw});
+  if(error){btn.disabled=false;btn.textContent='Access Administration Console';err.textContent=error.message;return}
+  await loadProfile();
+}
+async function loadProfile(){
+  const{data:{user}}=await db.auth.getUser();if(!user)return;
+  const{data:p,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+  if(error||!p||p.role!=='admin'){await db.auth.signOut();const err=document.getElementById('al-err');if(err)err.textContent='Access denied. Admin account required.';const btn=document.getElementById('al-btn');if(btn){btn.disabled=false;btn.textContent='Access Administration Console'}return}
+  me=p;document.getElementById('a-name').textContent=me.full_name;
+  document.getElementById('login-page').classList.add('hidden');document.getElementById('app').classList.remove('hidden');
+  await loadCounts();navTo('students');
+}
+async function logout(){await db.auth.signOut();me=null;document.getElementById('login-page').classList.remove('hidden');document.getElementById('app').classList.add('hidden');document.getElementById('al-email').value='';document.getElementById('al-pw').value='';const btn=document.getElementById('al-btn');btn.disabled=false;btn.textContent='Access Administration Console'}
+async function loadCounts(){
+  const[{count:sc},{count:tc},{count:uc}]=await Promise.all([db.from('profiles').select('id',{count:'exact',head:true}).eq('role','student'),db.from('profiles').select('id',{count:'exact',head:true}).eq('role','teacher'),db.from('subjects').select('id',{count:'exact',head:true})]);
+  document.getElementById('cnt-s').textContent=sc||0;document.getElementById('cnt-t').textContent=tc||0;document.getElementById('cnt-sub').textContent=uc||0;
+}
+function navTo(tab){cur=tab;['students','teachers','subjects','enroll'].forEach(t=>{document.getElementById(`nav-${t}`)?.classList.toggle('active',t===tab)});if(tab==='students')renderStudents();if(tab==='teachers')renderTeachers();if(tab==='subjects')renderSubjects();if(tab==='enroll')renderEnroll()}
+
+/* ── STUDENTS ── */
+async function renderStudents(){
+  const el=document.getElementById('a-main');el.innerHTML='<div class="loading"><span class="spin"></span> Loading students…</div>';
+  const{data:s}=await db.from('profiles').select('*').eq('role','student').order('roll_no');
+  let h=`<div class="su"><div class="pg-hd"><h2>Students</h2><p>Manage student accounts, enrollments and password resets.</p></div>
+  <div class="stats"><div class="stat"><div class="sv" style="color:var(--blue)">${(s||[]).length}</div><div class="sl">Total Students</div></div><div class="stat"><div class="sv" style="color:var(--amber)">${(s||[]).filter(x=>x.must_change_pw).length}</div><div class="sl">Pending PW Change</div></div></div>
+  <div class="tbl-card"><div class="tbl-hd"><h3>All Students</h3><button class="btn btn-primary btn-sm" onclick="openAddStudent()">＋ Add Student</button></div>`;
+  if(!s||s.length===0){h+=`<div class="empty"><div class="ei">👤</div><p>No students yet. Add your first student to get started.</p></div>`}
+  else{h+=`<table><thead><tr><th>Roll Number</th><th>Full Name</th><th class="c">PW Status</th><th class="c">Joined</th><th>Actions</th></tr></thead><tbody>`;
+  s.forEach(x=>{h+=`<tr><td><span style="font-family:var(--fm);font-size:.8rem;color:var(--blue)">${x.roll_no}</span></td><td style="font-weight:600">${x.full_name}</td><td class="c">${x.must_change_pw?'<span class="tag tag-amber">Must Change</span>':'<span class="tag tag-green">Set</span>'}</td><td class="c" style="font-family:var(--fm);font-size:.76rem;color:var(--text2)">${new Date(x.created_at).toLocaleDateString('en-GB')}</td><td><div style="display:flex;gap:.3rem"><button class="btn btn-outline btn-xs" onclick="openResetPw('${x.id}','${x.full_name}','student','${x.roll_no}')">Reset PW</button><button class="btn btn-danger btn-xs" onclick="confirmDelete('${x.id}','${x.full_name}')">Remove</button></div></td></tr>`});
+  h+=`</tbody></table>`}
+  h+=`</div></div>`;el.innerHTML=h;
+}
+function openAddStudent(){openModal(`<h3>Add New Student</h3><p class="ms">Creates a Supabase Auth account and student profile. Give the student their roll number and initial password.</p><div class="field"><label>Full Name</label><input id="as-n" type="text" placeholder="e.g. Ahmed Khan"/></div><div class="field"><label>Roll Number</label><input id="as-r" type="text" placeholder="e.g. ET-2025-7823"/><small>This becomes the student's login username.</small></div><div class="field"><label>Initial Password</label><input id="as-p" type="text" placeholder="Temporary password (min 6 characters)"/><small>Student will be prompted to change this on first login.</small></div><div id="as-err" class="err"></div><div class="modal-foot"><button class="btn btn-primary" id="as-btn" onclick="createStudent()">Create Student</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`)}
+async function createStudent(){
+  const n=document.getElementById('as-n').value.trim(),r=document.getElementById('as-r').value.trim(),p=document.getElementById('as-p').value;
+  const err=document.getElementById('as-err');err.textContent='';
+  if(!n||!r||!p){err.textContent='All fields are required.';return}if(p.length<6){err.textContent='Password must be at least 6 characters.';return}
+  const btn=document.getElementById('as-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  const{data:ad,error:ae}=await db.auth.signUp({email:`${r}@student.local`,password:p});
+  if(ae||!ad.user){btn.disabled=false;btn.textContent='Create Student';err.textContent=ae?.message||'Failed to create auth user.';return}
+  const{error:pe}=await db.from('profiles').insert({id:ad.user.id,full_name:n,roll_no:r,role:'student',must_change_pw:true});
+  if(pe){btn.disabled=false;btn.textContent='Create Student';err.textContent=pe.message;return}
+  closeModal();toast(`Student "${n}" created successfully.`);await loadCounts();renderStudents();
+}
+
+/* ── TEACHERS ── */
+async function renderTeachers(){
+  const el=document.getElementById('a-main');el.innerHTML='<div class="loading"><span class="spin"></span> Loading teachers…</div>';
+  const[{data:t},{data:subs}]=await Promise.all([db.from('profiles').select('*').eq('role','teacher').order('full_name'),db.from('subjects').select('*').order('name')]);
+  const sm={};(subs||[]).forEach(s=>sm[s.id]=s.name);
+  let h=`<div class="su"><div class="pg-hd"><h2>Teachers</h2><p>Manage teacher accounts and their subject assignments.</p></div>
+  <div class="tbl-card"><div class="tbl-hd"><h3>All Teachers</h3><button class="btn btn-primary btn-sm" onclick="openAddTeacher()">＋ Add Teacher</button></div>`;
+  if(!t||t.length===0){h+=`<div class="empty"><div class="ei">📋</div><p>No teachers yet.</p></div>`}
+  else{h+=`<table><thead><tr><th>Full Name</th><th>Assigned Subject</th><th class="c">PW Status</th><th class="c">Joined</th><th>Actions</th></tr></thead><tbody>`;
+  t.forEach(x=>{const sn=x.subject_id?sm[x.subject_id]:null;h+=`<tr><td style="font-weight:600">${x.full_name}</td><td>${sn?`<span class="tag tag-blue">${sn}</span>`:'<span style="color:var(--text3);font-size:.8rem">Unassigned</span>'}</td><td class="c">${x.must_change_pw?'<span class="tag tag-amber">Must Change</span>':'<span class="tag tag-green">Set</span>'}</td><td class="c" style="font-family:var(--fm);font-size:.76rem;color:var(--text2)">${new Date(x.created_at).toLocaleDateString('en-GB')}</td><td><div style="display:flex;gap:.3rem"><button class="btn btn-outline btn-xs" onclick="openReassign('${x.id}','${x.full_name}')">Reassign</button><button class="btn btn-outline btn-xs" onclick="openResetPw('${x.id}','${x.full_name}','teacher','')">Reset PW</button><button class="btn btn-danger btn-xs" onclick="confirmDelete('${x.id}','${x.full_name}')">Remove</button></div></td></tr>`});
+  h+=`</tbody></table>`}
+  h+=`</div></div>`;el.innerHTML=h;
+}
+async function openAddTeacher(){
+  const{data:subs}=await db.from('subjects').select('*').order('name');
+  const opts=(subs||[]).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  openModal(`<h3>Add New Teacher</h3><p class="ms">Creates a Supabase Auth account and teacher profile. Teacher signs in using their email address.</p><div class="field"><label>Full Name</label><input id="at-n" type="text" placeholder="e.g. Mr. Asif"/></div><div class="field"><label>Email Address</label><input id="at-e" type="email" placeholder="teacher@example.com"/></div><div class="field"><label>Initial Password</label><input id="at-p" type="text" placeholder="Temporary password (min 6 characters)"/></div><div class="field"><label>Assign Subject</label><select id="at-s"><option value="">— Assign later —</option>${opts}</select></div><div id="at-err" class="err"></div><div class="modal-foot"><button class="btn btn-primary" id="at-btn" onclick="createTeacher()">Create Teacher</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`);
+}
+async function createTeacher(){
+  const n=document.getElementById('at-n').value.trim(),e=document.getElementById('at-e').value.trim(),p=document.getElementById('at-p').value,s=document.getElementById('at-s').value;
+  const err=document.getElementById('at-err');err.textContent='';
+  if(!n||!e||!p){err.textContent='Name, email and password are required.';return}if(p.length<6){err.textContent='Password must be at least 6 characters.';return}
+  const btn=document.getElementById('at-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  const{data:ad,error:ae}=await db.auth.signUp({email:e,password:p});
+  if(ae||!ad.user){btn.disabled=false;btn.textContent='Create Teacher';err.textContent=ae?.message||'Failed to create auth user.';return}
+  const{error:pe}=await db.from('profiles').insert({id:ad.user.id,full_name:n,role:'teacher',subject_id:s||null,must_change_pw:true});
+  if(pe){btn.disabled=false;btn.textContent='Create Teacher';err.textContent=pe.message;return}
+  closeModal();toast(`Teacher "${n}" created successfully.`);await loadCounts();renderTeachers();
+}
+async function openReassign(tid,tname){
+  const{data:subs}=await db.from('subjects').select('*').order('name');
+  const{data:t}=await db.from('profiles').select('subject_id').eq('id',tid).single();
+  const opts=(subs||[]).map(s=>`<option value="${s.id}" ${t?.subject_id===s.id?'selected':''}>${s.name}</option>`).join('');
+  openModal(`<h3>Reassign Subject</h3><p class="ms">Change the subject assignment for <strong>${tname}</strong>.</p><div class="field"><label>Subject</label><select id="rs-s"><option value="">— Unassigned —</option>${opts}</select></div><div id="rs-err" class="err"></div><div class="modal-foot"><button class="btn btn-primary" onclick="doReassign('${tid}')">Save Changes</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`);
+}
+async function doReassign(tid){
+  const s=document.getElementById('rs-s').value;
+  const{error}=await db.from('profiles').update({subject_id:s||null}).eq('id',tid);
+  if(error){document.getElementById('rs-err').textContent=error.message;return}
+  closeModal();toast('Subject assignment updated.');renderTeachers();
+}
+
+/* ── SUBJECTS ── */
+async function renderSubjects(){
+  const el=document.getElementById('a-main');el.innerHTML='<div class="loading"><span class="spin"></span> Loading subjects…</div>';
+  const{data:s}=await db.from('subjects').select('*').order('name');
+  let h=`<div class="su"><div class="pg-hd"><h2>Subjects</h2><p>Manage the curriculum subjects for the entry test preparation programme.</p></div>
+  <div class="tbl-card"><div class="tbl-hd"><h3>All Subjects</h3><button class="btn btn-primary btn-sm" onclick="openAddSubject()">＋ Add Subject</button></div>`;
+  if(!s||s.length===0){h+=`<div class="empty"><div class="ei">📚</div><p>No subjects configured yet.</p></div>`}
+  else{h+=`<table><thead><tr><th style="width:44px">#</th><th>Subject Name</th><th class="c">Created</th><th>Actions</th></tr></thead><tbody>`;
+  s.forEach((x,i)=>{h+=`<tr><td style="font-family:var(--fm);color:var(--text3);font-size:.75rem">${String(i+1).padStart(2,'0')}</td><td style="font-weight:600">${x.name}</td><td class="c" style="font-family:var(--fm);font-size:.76rem;color:var(--text2)">${new Date(x.created_at).toLocaleDateString('en-GB')}</td><td><button class="btn btn-danger btn-xs" onclick="confirmDeleteSubject('${x.id}','${x.name}')">Delete</button></td></tr>`});
+  h+=`</tbody></table>`}
+  h+=`</div></div>`;el.innerHTML=h;
+}
+function openAddSubject(){openModal(`<h3>Add New Subject</h3><p class="ms">Add a new subject to the programme curriculum. Teachers can then be assigned to it.</p><div class="field"><label>Subject Name</label><input id="sub-n" type="text" placeholder="e.g. Mathematics"/></div><div id="sub-err" class="err"></div><div class="modal-foot"><button class="btn btn-primary" onclick="createSubject()">Add Subject</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`)}
+async function createSubject(){
+  const n=document.getElementById('sub-n').value.trim(),err=document.getElementById('sub-err');err.textContent='';
+  if(!n){err.textContent='Subject name is required.';return}
+  const{error}=await db.from('subjects').insert({name:n});if(error){err.textContent=error.message;return}
+  closeModal();toast(`Subject "${n}" added.`);await loadCounts();renderSubjects();
+}
+function confirmDeleteSubject(id,name){openModal(`<h3>Delete Subject</h3><p class="ms">Are you sure you want to delete <strong>"${name}"</strong>?<br/>This will permanently remove all assessments and marks for this subject. This action cannot be undone.</p><div class="modal-foot"><button class="btn btn-danger" onclick="deleteSubject('${id}','${name}')">Yes, Delete Subject</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`)}
+async function deleteSubject(id,name){const{error}=await db.from('subjects').delete().eq('id',id);if(error){toast('Delete failed: '+error.message,'err');return}closeModal();toast(`Subject "${name}" deleted.`);await loadCounts();renderSubjects()}
+
+/* ── ENROLLMENTS ── */
+async function renderEnroll(){
+  const el=document.getElementById('a-main');el.innerHTML='<div class="loading"><span class="spin"></span> Loading…</div>';
+  const[{data:st},{data:subs}]=await Promise.all([db.from('profiles').select('id,full_name,roll_no').eq('role','student').order('roll_no'),db.from('subjects').select('*').order('name')]);
+  const so=(st||[]).map(s=>`<option value="${s.id}">${s.roll_no} — ${s.full_name}</option>`).join('');
+  const subo=(subs||[]).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  let h=`<div class="su"><div class="pg-hd"><h2>Enrollments</h2><p>Manage which students are enrolled in which subjects.</p></div>
+  <div class="en-grid"><div class="en-box"><h4>➕ Enroll Student</h4><div class="field"><label>Student</label><select id="en-s">${so}</select></div><div class="field"><label>Subject</label><select id="en-sub">${subo}</select></div><div id="en-err" class="err"></div><button class="btn btn-primary" style="width:100%;margin-top:.5rem;padding:.55rem" onclick="doEnroll()">Enroll Student</button></div>
+  <div class="en-box"><h4>➖ Remove Enrollment</h4><div class="field"><label>Student</label><select id="rm-s">${so}</select></div><div class="field"><label>Subject</label><select id="rm-sub">${subo}</select></div><div id="rm-err" class="err"></div><button class="btn btn-danger" style="width:100%;margin-top:.5rem;padding:.55rem" onclick="doRemove()">Remove Enrollment</button></div></div>
+  <div style="margin-top:1.5rem"><button class="btn btn-outline btn-sm" onclick="loadEnrollList()">↓ View All Current Enrollments</button><div id="enroll-list" style="margin-top:1rem"></div></div></div>`;
+  el.innerHTML=h;
+}
+async function doEnroll(){
+  const s=document.getElementById('en-s').value,sub=document.getElementById('en-sub').value,err=document.getElementById('en-err');err.textContent='';
+  if(!s||!sub){err.textContent='Select both student and subject.';return}
+  const{error}=await db.from('student_subjects').insert({student_id:s,subject_id:sub});
+  if(error){err.textContent=error.code==='23505'?'Student is already enrolled in this subject.':error.message;return}
+  toast('Student enrolled. Mark rows auto-created by database trigger.');
+}
+async function doRemove(){
+  const s=document.getElementById('rm-s').value,sub=document.getElementById('rm-sub').value,err=document.getElementById('rm-err');err.textContent='';
+  if(!s||!sub){err.textContent='Select both.';return}
+  if(!confirm("Remove this enrollment? The student will lose access to this subject's marks."))return;
+  const{error}=await db.from('student_subjects').delete().eq('student_id',s).eq('subject_id',sub);
+  if(error){err.textContent=error.message;return}toast('Enrollment removed.');
+}
+async function loadEnrollList(){
+  const el=document.getElementById('enroll-list');el.innerHTML='<div class="loading" style="padding:1.5rem"><span class="spin"></span></div>';
+  const{data}=await db.from('student_subjects').select('student_id,subject_id,profiles(full_name,roll_no),subjects(name)');
+  if(!data||data.length===0){el.innerHTML='<div class="empty" style="padding:1.5rem"><div class="ei">📭</div><p>No enrollments found.</p></div>';return}
+  let h=`<div class="tbl-card"><div class="tbl-hd"><h3>All Enrollments</h3><span style="font-family:var(--fm);font-size:.72rem;color:var(--text2)">${data.length} total</span></div><table><thead><tr><th>Roll No</th><th>Student Name</th><th>Subject</th><th>Actions</th></tr></thead><tbody>`;
+  data.forEach(e=>{h+=`<tr><td style="font-family:var(--fm);font-size:.78rem;color:var(--blue)">${e.profiles.roll_no}</td><td style="font-weight:500">${e.profiles.full_name}</td><td><span class="tag tag-blue">${e.subjects.name}</span></td><td><button class="btn btn-danger btn-xs" onclick="quickRemove('${e.student_id}','${e.subject_id}',this)">Remove</button></td></tr>`});
+  h+=`</tbody></table></div>`;el.innerHTML=h;
+}
+async function quickRemove(sid,subid,btn){if(!confirm('Remove this enrollment?'))return;btn.disabled=true;const{error}=await db.from('student_subjects').delete().eq('student_id',sid).eq('subject_id',subid);if(error){toast('Failed: '+error.message,'err');btn.disabled=false;return}toast('Enrollment removed.');btn.closest('tr').remove()}
+
+/* ── RESET PW ── */
+function openResetPw(uid,name,role,roll){openModal(`<h3>Reset Password</h3><p class="ms">Set a new temporary password for <strong>${name}</strong>.${role==='student'?` Login username: <code style="font-family:var(--fm);background:var(--surf);padding:.1rem .3rem;border-radius:3px">${roll}</code>`:''}</p><div class="field"><label>New Temporary Password</label><input id="rp-p" type="text" placeholder="Minimum 6 characters"/><small>User will be required to change this on next login.</small></div><div id="rp-err" class="err"></div><div class="modal-foot"><button class="btn btn-primary" onclick="doResetPw('${uid}')">Set Password</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`)}
+async function doResetPw(uid){
+  const p=document.getElementById('rp-p').value,err=document.getElementById('rp-err');err.textContent='';
+  if(!p||p.length<6){err.textContent='Min 6 characters.';return}
+  err.textContent='⚠️ Password reset requires a server-side Edge Function (Admin API). Contact your developer to enable this feature.';
+}
+
+/* ── DELETE USER ── */
+function confirmDelete(uid,name){openModal(`<h3>Remove User</h3><p class="ms">Are you sure you want to remove <strong>${name}</strong>?<br/>Their profile and all associated data will be deleted. Their authentication account will remain until cleaned up via the Supabase dashboard.</p><div class="modal-foot"><button class="btn btn-danger" onclick="deleteUser('${uid}','${name}')">Yes, Remove User</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button></div>`)}
+async function deleteUser(uid,name){const{error}=await db.from('profiles').delete().eq('id',uid);if(error){toast('Failed: '+error.message,'err');return}closeModal();toast(`"${name}" removed from the system.`);await loadCounts();navTo(cur)}
+
+(async()=>{const{data:{session}}=await db.auth.getSession();if(session)await loadProfile()})();
+</script>
+</body>
+</html>

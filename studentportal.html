@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EduMark — Student Results Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;1,8..60,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --cream:#faf7f2; --cream2:#f2ede4; --white:#ffffff; --ink:#1a1612; --ink2:#4a4540; --ink3:#8a8078;
+  --gold:#c49a3c; --gold-dim:rgba(196,154,60,.12); --gold-light:#f0e4c4;
+  --green:#2d6a4f; --green-bg:#e8f5ee; --red:#9b2335; --red-bg:#fce8eb;
+  --amber:#92580a; --amber-bg:#fdf0dc;
+  --border:#ddd5c8; --border2:#c8bfb0;
+  --shadow-sm:0 1px 3px rgba(26,22,18,.06),0 1px 2px rgba(26,22,18,.04);
+  --shadow:0 4px 16px rgba(26,22,18,.08); --shadow-lg:0 12px 40px rgba(26,22,18,.12);
+  --fd:'Playfair Display',Georgia,serif; --fb:'Source Serif 4',Georgia,serif; --fm:'JetBrains Mono',monospace;
+  --r:6px; --r2:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);color:var(--ink);font-family:var(--fb);min-height:100vh;display:flex;flex-direction:column;font-size:15px;line-height:1.65}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--cream2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* noise texture */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* ── LOGIN ── */
+#login-page{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;min-height:100vh;position:relative;z-index:1}
+#login-page::after{content:'';position:fixed;top:-150px;right:-150px;width:500px;height:500px;background:radial-gradient(ellipse,rgba(196,154,60,.07),transparent 70%);pointer-events:none}
+.login-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow-lg);width:100%;max-width:880px;display:flex;overflow:hidden;min-height:520px}
+.ll{width:340px;flex-shrink:0;background:var(--ink);padding:3rem 2.5rem;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.ll::before{content:'';position:absolute;bottom:-60px;left:-60px;width:300px;height:300px;border:60px solid rgba(196,154,60,.07);border-radius:50%}
+.ll::after{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border:40px solid rgba(196,154,60,.05);border-radius:50%}
+.ll-top{position:relative;z-index:1}
+.ll-crest{display:flex;align-items:center;gap:.7rem;margin-bottom:2.5rem}
+.ll-crest-icon{width:38px;height:38px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ll-crest-text{font-family:var(--fd);color:#fff;font-size:1.15rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.ll-crest-text small{display:block;font-family:var(--fm);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:400;margin-top:.1rem}
+.ll h2{font-family:var(--fd);font-size:1.75rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:.8rem;letter-spacing:-.02em}
+.ll p{font-size:.82rem;color:rgba(255,255,255,.45);line-height:1.75;font-weight:300}
+.ll-divider{height:1px;background:rgba(255,255,255,.08);margin:1.5rem 0}
+.ll-point{display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.65rem;font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.5}
+.ll-dot{width:5px;height:5px;background:var(--gold);border-radius:50%;flex-shrink:0;margin-top:.45rem}
+.ll-footer{font-family:var(--fm);font-size:.6rem;color:rgba(255,255,255,.18);letter-spacing:.06em;text-transform:uppercase;position:relative;z-index:1}
+.lr{flex:1;padding:3rem;display:flex;flex-direction:column;justify-content:center}
+.lr h3{font-family:var(--fd);font-size:1.5rem;font-weight:700;margin-bottom:.3rem;color:var(--ink);letter-spacing:-.02em}
+.lr>p{font-size:.84rem;color:var(--ink3);margin-bottom:2rem;font-weight:300}
+
+/* ── FIELDS ── */
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-family:var(--fm);font-size:.65rem;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}
+.field input,.field select{width:100%;border:1.5px solid var(--border);border-radius:var(--r);padding:.65rem 1rem;font-family:var(--fb);font-size:.92rem;color:var(--ink);background:var(--cream);outline:none;transition:all .18s}
+.field input:focus,.field select:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 3px rgba(196,154,60,.1)}
+.field select option{background:var(--white)}
+.err{font-family:var(--fm);font-size:.7rem;color:var(--red);margin-top:.5rem;min-height:1em}
+
+/* ── BUTTONS ── */
+.btn-login{width:100%;background:var(--ink);color:#fff;border:none;border-radius:var(--r);padding:.78rem 1.5rem;font-family:var(--fd);font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .18s;margin-top:.5rem}
+.btn-login:hover{background:#2d2820;transform:translateY(-1px)}
+.btn-login:disabled{opacity:.5;cursor:default;transform:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.48rem 1rem;border-radius:var(--r);font-family:var(--fm);font-size:.72rem;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;letter-spacing:.02em}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:#a8832a}
+.btn-danger{background:transparent;border:1.5px solid rgba(155,35,53,.25);color:var(--red)}
+.btn-danger:hover{background:var(--red-bg)}
+.btn-sm{padding:.3rem .7rem;font-size:.68rem}
+.btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+.btn-save{background:var(--ink);color:#fff;border:none;border-radius:var(--r);padding:.65rem 1.4rem;font-family:var(--fd);font-size:.9rem;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-save:hover{background:#2d2820}
+.back-btn{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--fm);font-size:.7rem;color:var(--gold);cursor:pointer;border:none;background:none;padding:0;margin-bottom:.8rem;transition:opacity .15s}
+.back-btn:hover{opacity:.7}
+
+/* ── APP SHELL ── */
+#app{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1}
+.topbar{background:var(--ink);height:58px;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-brand{display:flex;align-items:center;gap:.75rem}
+.tb-crest{width:28px;height:28px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;flex-shrink:0}
+.tb-title{font-family:var(--fd);color:#fff;font-size:1rem;font-weight:700;letter-spacing:-.02em}
+.tb-sep{color:rgba(255,255,255,.2);margin:0 .4rem;font-size:.9rem}
+.tb-tag{font-family:var(--fm);font-size:.6rem;color:rgba(255,255,255,.32);letter-spacing:.1em;text-transform:uppercase}
+.tb-right{display:flex;align-items:center;gap:.8rem}
+.tb-user{font-family:var(--fm);font-size:.7rem;color:rgba(255,255,255,.48)}
+.tb-roll{font-family:var(--fm);font-size:.68rem;background:rgba(196,154,60,.18);color:var(--gold);padding:.17rem .52rem;border-radius:4px}
+.btn-so{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);padding:.28rem .78rem;border-radius:4px;font-family:var(--fm);font-size:.68rem;cursor:pointer;transition:all .15s}
+.btn-so:hover{background:rgba(255,255,255,.15)}
+
+/* ── SIDEBAR LAYOUT ── */
+.app-body{display:flex;flex:1}
+.sidebar{width:218px;background:var(--white);border-right:1px solid var(--border);flex-shrink:0;padding:1.4rem .8rem;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;display:flex;flex-direction:column}
+.sb-label{font-family:var(--fm);font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);padding:0 .6rem;margin-bottom:.5rem}
+.sb-item{display:flex;align-items:center;gap:.6rem;padding:.52rem .72rem;border-radius:var(--r);font-family:var(--fb);font-size:.86rem;color:var(--ink2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s;font-weight:400}
+.sb-item:hover{background:var(--cream2);color:var(--ink)}
+.sb-item.active{background:var(--gold-dim);color:var(--gold);font-weight:500}
+.sb-item .ico{width:18px;text-align:center;font-size:.92rem}
+.sb-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border)}
+.sb-card{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r);padding:.72rem}
+.sb-card .sn{font-weight:500;font-size:.84rem;color:var(--ink)}
+.sb-card .sr{font-family:var(--fm);font-size:.66rem;color:var(--ink3);margin-top:.2rem}
+.main{flex:1;padding:2rem 2.5rem;overflow-x:hidden}
+
+/* ── TYPOGRAPHY ── */
+.pg-title{font-family:var(--fd);font-size:1.7rem;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:.25rem}
+.pg-sub{font-size:.83rem;color:var(--ink3);font-weight:300;margin-bottom:2rem}
+
+/* ── SUBJECT CARDS ── */
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+.subj-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:1.5rem;cursor:pointer;transition:all .2s;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.subj-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .2s}
+.subj-card:hover{border-color:var(--gold);box-shadow:var(--shadow);transform:translateY(-2px)}
+.subj-card:hover::after{transform:scaleX(1)}
+.sc-ico{font-size:2rem;margin-bottom:.75rem}
+.sc-nm{font-family:var(--fd);font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.2rem}
+.sc-hint{font-size:.75rem;color:var(--ink3);font-weight:300}
+
+/* ── TABLE ── */
+.tbl-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow-sm);overflow:hidden}
+.tbl-hd{padding:.9rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.tbl-hd h3{font-family:var(--fd);font-size:1.05rem;font-weight:700;letter-spacing:-.02em}
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+thead th{background:var(--cream2);padding:.58rem 1.4rem;text-align:left;font-family:var(--fm);font-size:.63rem;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);border-bottom:1px solid var(--border);white-space:nowrap}
+th.c{text-align:center}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--cream)}
+td{padding:.72rem 1.4rem;vertical-align:middle}
+td.c{text-align:center}
+.td-tot{background:var(--cream2);font-weight:600}
+
+/* ── PILLS ── */
+.pill{display:inline-block;padding:.17rem .62rem;border-radius:99px;font-family:var(--fm);font-size:.67rem;font-weight:500}
+.pill-pass{background:var(--green-bg);color:var(--green)}
+.pill-avg{background:var(--amber-bg);color:var(--amber)}
+.pill-fail{background:var(--red-bg);color:var(--red)}
+.pill-nd{background:var(--cream2);color:var(--ink3);border:1px solid var(--border)}
+
+/* ── MISC ── */
+.pw-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:2rem;max-width:420px;box-shadow:var(--shadow-sm)}
+.pw-card h3{font-family:var(--fd);font-size:1.2rem;font-weight:700;margin-bottom:.25rem;letter-spacing:-.02em}
+.pw-card p{font-size:.83rem;color:var(--ink3);font-weight:300;margin-bottom:1.5rem}
+.alert{display:flex;align-items:flex-start;gap:.7rem;padding:.85rem 1.1rem;border-radius:var(--r);font-size:.83rem;margin-bottom:1.4rem;line-height:1.55}
+.alert-warn{background:var(--amber-bg);border:1px solid rgba(146,88,10,.2);color:var(--amber)}
+.spin{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:sp .6s linear infinite;display:inline-block}
+.loading{display:flex;align-items:center;justify-content:center;padding:4rem;gap:.8rem;color:var(--ink3);font-family:var(--fm);font-size:.78rem}
+.empty{text-align:center;padding:4rem 2rem;color:var(--ink3)}
+.empty .ei{font-size:2.5rem;margin-bottom:.8rem}
+.empty p{font-size:.83rem;font-weight:300}
+#toast{position:fixed;bottom:1.8rem;right:1.8rem;background:var(--ink);color:#fff;padding:.72rem 1.25rem;border-radius:var(--r2);font-family:var(--fm);font-size:.76rem;z-index:999;transform:translateY(60px);opacity:0;transition:all .3s ease;max-width:300px;box-shadow:var(--shadow-lg)}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok{border-left:3px solid var(--green)}
+#toast.err{border-left:3px solid var(--red)}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.su{animation:su .25s ease both}
+@media(max-width:780px){.ll{display:none}.sidebar{display:none}.main{padding:1rem}.topbar{padding:0 1rem}}
+</style>
+</head>
+<body>
+
+<div id="login-page">
+  <div class="login-card">
+    <div class="ll">
+      <div class="ll-top">
+        <div class="ll-crest">
+          <div class="ll-crest-icon">🎓</div>
+          <div class="ll-crest-text">EduMark<small>Student Portal</small></div>
+        </div>
+        <h2>Academic Results System</h2>
+        <p>Access your assessment marks, track performance across all enrolled subjects, and monitor your academic progress.</p>
+        <div class="ll-divider"></div>
+        <div class="ll-point"><span class="ll-dot"></span>View marks by subject and assessment</div>
+        <div class="ll-point"><span class="ll-dot"></span>Track your percentage and grade status</div>
+        <div class="ll-point"><span class="ll-dot"></span>Secure, private access to your results</div>
+      </div>
+      <div class="ll-footer">EduMark · Entry Test Preparation · Secure</div>
+    </div>
+    <div class="lr">
+      <h3>Student Sign In</h3>
+      <p>Enter your roll number and password to access your results.</p>
+      <div class="field"><label>Roll Number</label><input id="sl-roll" type="text" placeholder="e.g. ET-2025-7823" autocomplete="username"/></div>
+      <div class="field"><label>Password</label><input id="sl-pw" type="password" placeholder="Enter your password" autocomplete="current-password"/></div>
+      <div id="sl-err" class="err"></div>
+      <button class="btn-login" id="sl-btn" onclick="doLogin()">Sign In to Portal →</button>
+      <p style="margin-top:1.5rem;font-size:.75rem;color:var(--ink3);text-align:center;font-weight:300">Forgot your credentials? Contact your institution administrator.</p>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden" style="flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1">
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-crest">🎓</div>
+      <span class="tb-title">EduMark</span>
+      <span class="tb-sep">/</span>
+      <span class="tb-tag">Student Portal</span>
+    </div>
+    <div class="tb-right">
+      <span class="tb-user" id="t-name"></span>
+      <span class="tb-roll" id="t-roll"></span>
+      <button class="btn-so" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="app-body" style="flex:1">
+    <div class="sidebar">
+      <div class="sb-label" style="margin-bottom:.8rem">Navigation</div>
+      <button class="sb-item active" id="nav-subjects" onclick="navTo('subjects')"><span class="ico">📚</span> My Subjects</button>
+      <button class="sb-item" id="nav-pw" onclick="navTo('pw')"><span class="ico">🔒</span> Change Password</button>
+      <div class="sb-footer">
+        <div class="sb-card">
+          <div class="sn" id="sb-name"></div>
+          <div class="sr" id="sb-roll"></div>
+        </div>
+      </div>
+    </div>
+    <div class="main" id="s-main"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://atyrinncjaijcditeimo.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0eXJpbm5jamFpamNkaXRlaW1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjc2MzMsImV4cCI6MjA4NzcwMzYzM30.2NRtNqLMjUtxs91_p5CLlQwrLz2E4-dCc4ZqTqsg8XI';
+const{createClient}=supabase;const db=createClient(SUPABASE_URL,SUPABASE_ANON);
+let me=null,_tt;
+const ICONS={'Mathematics':'📐','Physics':'⚛️','IQ / Reasoning':'🧠','English':'📖','Biology':'🔬','Chemistry':'⚗️'};
+const pClass=p=>p>=70?'pill-pass':p>=50?'pill-avg':'pill-fail';
+const grade=p=>p>=70?'Pass':p>=50?'Average':'Below Avg';
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className=`show ${type}`;clearTimeout(_tt);_tt=setTimeout(()=>el.className='',3200)}
+async function doLogin(){
+  const roll=document.getElementById('sl-roll').value.trim(),pw=document.getElementById('sl-pw').value;
+  const err=document.getElementById('sl-err');err.textContent='';
+  if(!roll||!pw){err.textContent='Please fill in all fields.';return}
+  const btn=document.getElementById('sl-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
+  const{error}=await db.auth.signInWithPassword({email:`${roll}@student.local`,password:pw});
+  if(error){btn.disabled=false;btn.textContent='Sign In to Portal →';err.textContent='Invalid roll number or password.';return}
+  await loadProfile();
+}
+async function loadProfile(){
+  const{data:{user}}=await db.auth.getUser();if(!user)return;
+  const{data:p,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+  if(error||!p||p.role!=='student'){await db.auth.signOut();const err=document.getElementById('sl-err');if(err)err.textContent='Access denied.';const btn=document.getElementById('sl-btn');if(btn){btn.disabled=false;btn.textContent='Sign In to Portal →'}return}
+  me=p;
+  document.getElementById('t-name').textContent=me.full_name;document.getElementById('t-roll').textContent=me.roll_no;
+  document.getElementById('sb-name').textContent=me.full_name;document.getElementById('sb-roll').textContent=me.roll_no;
+  document.getElementById('login-page').classList.add('hidden');document.getElementById('app').classList.remove('hidden');
+  if(me.must_change_pw)navTo('pw');else navTo('subjects');
+}
+async function logout(){await db.auth.signOut();me=null;document.getElementById('login-page').classList.remove('hidden');document.getElementById('app').classList.add('hidden');document.getElementById('sl-roll').value='';document.getElementById('sl-pw').value='';const btn=document.getElementById('sl-btn');btn.disabled=false;btn.textContent='Sign In to Portal →'}
+function navTo(page){['subjects','pw'].forEach(p=>{const el=document.getElementById(`nav-${p}`);if(el)el.classList.toggle('active',p===page)});if(page==='subjects')renderSubjects();if(page==='pw')renderPw()}
+async function renderSubjects(){
+  const el=document.getElementById('s-main');el.innerHTML='<div class="loading"><span class="spin"></span> Loading subjects…</div>';
+  const{data:en}=await db.from('student_subjects').select('subject_id,subjects(id,name)').eq('student_id',me.id);
+  let h='<div class="su">';
+  if(me.must_change_pw)h+=`<div class="alert alert-warn">⚠️ <span>Please change your password — use <strong>Change Password</strong> in the sidebar.</span></div>`;
+  h+=`<div class="pg-title">My Subjects</div><p class="pg-sub">Select a subject to view your assessment results and performance.</p>`;
+  if(!en||en.length===0){h+=`<div class="empty"><div class="ei">📭</div><p>You are not enrolled in any subjects yet.<br/>Please contact your administrator.</p></div>`}
+  else{h+=`<div class="subj-grid">`;en.forEach(e=>{const s=e.subjects;h+=`<div class="subj-card" onclick="renderMarks('${s.id}','${s.name}')"><div class="sc-ico">${ICONS[s.name]||'📚'}</div><div class="sc-nm">${s.name}</div><div class="sc-hint">View results →</div></div>`});h+=`</div>`}
+  h+='</div>';el.innerHTML=h;
+}
+async function renderMarks(sid,sname){
+  const el=document.getElementById('s-main');el.innerHTML='<div class="loading"><span class="spin"></span> Loading results…</div>';
+  const{data:ass}=await db.from('assessments').select('*').eq('subject_id',sid).order('created_at');
+  const aIds=(ass||[]).map(a=>a.id);let marks=[];
+  if(aIds.length){const{data:m}=await db.from('marks').select('assessment_id,obtained_marks').eq('student_id',me.id).in('assessment_id',aIds);marks=m||[]}
+  const mm={};marks.forEach(m=>mm[m.assessment_id]=m.obtained_marks);
+  let to=0,tm=0;(ass||[]).forEach(a=>{tm+=a.total_marks;if(mm[a.id]!=null)to+=mm[a.id]});
+  const pct=tm>0?Math.round((to/tm)*100):null,pc=pct===null?'pill-nd':pClass(pct);
+  let h=`<div class="su"><button class="back-btn" onclick="navTo('subjects')">← Back to Subjects</button>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.8rem;margin-bottom:1.8rem">
+    <div><div class="pg-title">${ICONS[sname]||'📚'} ${sname}</div><p class="pg-sub" style="margin-bottom:0">Roll No: <strong>${me.roll_no}</strong> &nbsp;·&nbsp; ${me.full_name}</p></div>
+    ${pct!==null?`<span class="pill ${pc}" style="font-size:.87rem;padding:.35rem .9rem;margin-top:.3rem">${pct}% Overall</span>`:''}
+  </div>`;
+  if(!ass||ass.length===0){h+=`<div class="empty"><div class="ei">📝</div><p>No assessments have been created for this subject yet.</p></div>`}
+  else{h+=`<div class="tbl-wrap"><div class="tbl-hd"><h3>Assessment Results — ${sname}</h3><span style="font-family:var(--fm);font-size:.68rem;color:var(--ink3)">${ass.length} assessment(s)</span></div>
+  <table><thead><tr><th style="width:38px">#</th><th>Assessment</th><th class="c">Obtained</th><th class="c">Out Of</th><th class="c">Percentage</th><th class="c">Grade</th></tr></thead><tbody>`;
+  ass.forEach((a,i)=>{const obt=mm[a.id],p=obt!=null?Math.round((obt/a.total_marks)*100):null,pc2=obt==null?'pill-nd':pClass(p);
+  h+=`<tr><td style="font-family:var(--fm);color:var(--ink3);font-size:.73rem">${String(i+1).padStart(2,'0')}</td><td style="font-weight:500">${a.title}</td><td class="c" style="font-family:var(--fm);font-weight:600">${obt!=null?obt:'—'}</td><td class="c" style="font-family:var(--fm);color:var(--ink3)">${a.total_marks}</td><td class="c">${p!==null?`<span class="pill ${pc2}">${p}%</span>`:'—'}</td><td class="c"><span class="pill ${pc2}">${obt==null?'Pending':grade(p)}</span></td></tr>`});
+  h+=`<tr class="td-tot"><td></td><td style="font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase">Grand Total</td><td class="c" style="font-family:var(--fm);font-size:1rem">${to}</td><td class="c" style="font-family:var(--fm);color:var(--ink3)">${tm}</td><td class="c">${pct!==null?`<span class="pill ${pc}">${pct}%</span>`:'—'}</td><td class="c">${pct!==null?`<span class="pill ${pClass(pct)}">${grade(pct)}</span>`:'—'}</td></tr></tbody></table></div>`}
+  h+='</div>';el.innerHTML=h;
+}
+function renderPw(){const el=document.getElementById('s-main');el.innerHTML=`<div class="su"><div class="pg-title">Change Password</div><p class="pg-sub" style="margin-bottom:1.5rem">${me.must_change_pw?'You must set a new password before accessing your results.':'Update your account password below.'}</p><div class="pw-card"><h3>🔒 Update Password</h3><p>Please choose a strong, memorable password for your account.</p><div class="field"><label>Current Password</label><input type="password" id="cp-old" placeholder="Your current password"/></div><div class="field"><label>New Password</label><input type="password" id="cp-new" placeholder="Minimum 6 characters"/></div><div class="field"><label>Confirm New Password</label><input type="password" id="cp-c" placeholder="Repeat your new password"/></div><div id="cp-err" class="err"></div><div style="display:flex;gap:.7rem;margin-top:1rem;flex-wrap:wrap"><button class="btn-save" onclick="doChangePw()">Update Password</button>${!me.must_change_pw?`<button class="btn btn-outline" onclick="navTo('subjects')">Cancel</button>`:''}</div></div></div>`}
+async function doChangePw(){
+  const old=document.getElementById('cp-old').value,np=document.getElementById('cp-new').value,c=document.getElementById('cp-c').value;
+  const err=document.getElementById('cp-err');err.textContent='';
+  if(!old||!np||!c){err.textContent='Please fill in all fields.';return}
+  if(np.length<6){err.textContent='Password must be at least 6 characters.';return}
+  if(np!==c){err.textContent='Passwords do not match.';return}
+  const{error:re}=await db.auth.signInWithPassword({email:`${me.roll_no}@student.local`,password:old});
+  if(re){err.textContent='Current password is incorrect.';return}
+  const{error}=await db.auth.updateUser({password:np});
+  if(error){err.textContent=error.message;return}
+  await db.from('profiles').update({must_change_pw:false}).eq('id',me.id);
+  me.must_change_pw=false;toast('Password updated successfully!');navTo('subjects');
+}
+(async()=>{const{data:{session}}=await db.auth.getSession();if(session)await loadProfile()})();
+</script>
+</body>
+</html>
