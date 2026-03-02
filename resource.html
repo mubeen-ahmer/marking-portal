@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduHub Resource Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F7F5F0; --bg2: #EDEAE3; --ink: #1A1714; --ink2: #5A5550; --ink3: #9A948E;
+            --white: #FFFCF7; --border: #D8D3CB; --accent: #C8502A;
+            --shadow: 0 2px 12px rgba(26,23,20,0.08);
+            --shadow-lg: 0 12px 48px rgba(26,23,20,0.16);
+            --radius: 16px; --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+        .material-icons-round { font-family: 'Material Icons Round'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; direction: ltr; -webkit-font-smoothing: antialiased; }
+
+        /* Header */
+        .header { position: sticky; top: 0; z-index: 100; background: var(--white); border-bottom: 1.5px solid var(--border); backdrop-filter: blur(12px); }
+        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 68px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .logo-icon .material-icons-round { font-size: 20px; color: #fff; }
+        .logo-text { display: flex; flex-direction: column; gap: 1px; }
+        .logo-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); line-height: 1; }
+        .logo-sub { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); }
+        .add-btn { display: flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); letter-spacing: 0.02em; }
+        .add-btn:hover { background: #A83E1F; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,80,42,0.35); }
+        .add-btn .material-icons-round { font-size: 18px; }
+
+        /* Hero */
+        .hero { position: relative; overflow: hidden; background: var(--ink); padding: 72px 32px 80px; }
+        .hero-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
+        .hero-label { font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+        .hero-title { font-family: 'DM Serif Display', serif; font-size: clamp(48px, 7vw, 88px); color: var(--white); line-height: 1.0; margin-bottom: 20px; }
+        .hero-title em { font-style: italic; color: var(--accent); }
+        .hero-desc { font-size: 17px; color: #A89F96; max-width: 480px; line-height: 1.65; }
+        .hero-shapes { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+        .shape { position: absolute; border-radius: 50%; opacity: 0.06; }
+        .s1 { width: 600px; height: 600px; background: var(--accent); right: -100px; top: -200px; }
+        .s2 { width: 300px; height: 300px; background: #fff; right: 300px; bottom: -150px; }
+        .s3 { width: 150px; height: 150px; background: var(--accent); right: 200px; top: 40px; opacity: 0.12; }
+
+        /* Category Nav */
+        .cat-nav { background: var(--white); border-bottom: 1.5px solid var(--border); padding: 0 32px; display: flex; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .cat-nav::-webkit-scrollbar { display: none; }
+        .cat-tab { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border: none; background: transparent; color: var(--ink2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: var(--transition); margin-bottom: -1.5px; }
+        .cat-tab:hover { color: var(--ink); }
+        .cat-tab.active { font-weight: 600; }
+        .cat-tab .material-icons-round { font-size: 18px; opacity: 0.85; }
+
+        /* Main */
+        .main { max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .section-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); display: flex; align-items: center; gap: 12px; }
+        .section-title .material-icons-round { font-size: 30px; }
+        .section-count { font-size: 13px; color: var(--ink3); font-weight: 500; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+
+        /* Card */
+        .card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 28px 24px 24px; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--card-color, var(--accent)); transform: scaleX(0); transform-origin: left; transition: transform var(--transition); }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent; }
+        .card:hover::before { transform: scaleX(1); }
+        .card-icon-wrap { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; background: var(--card-color-light, #FEF3EE); }
+        .card-icon-wrap .material-icons-round { font-size: 26px; color: var(--card-color, var(--accent)); }
+        .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 8px; line-height: 1.2; }
+        .card-desc { font-size: 13.5px; color: var(--ink2); line-height: 1.6; margin-bottom: 20px; }
+        .card-footer { display: flex; align-items: center; justify-content: space-between; }
+        .card-res-count { font-size: 12px; color: var(--ink3); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .card-res-count .material-icons-round { font-size: 15px; }
+        .card-arrow { width: 32px; height: 32px; border-radius: 50%; background: var(--bg2); display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .card-arrow .material-icons-round { font-size: 16px; color: var(--ink2); transition: var(--transition); }
+        .card:hover .card-arrow { background: var(--card-color, var(--accent)); }
+        .card:hover .card-arrow .material-icons-round { color: white; transform: translateX(2px); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(26,23,20,0.6); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity var(--transition); }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal { background: var(--white); border-radius: 24px; padding: 40px; max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; transform: translateY(20px) scale(0.97); transition: transform var(--transition); }
+        .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+        .modal::-webkit-scrollbar { width: 5px; }
+        .modal::-webkit-scrollbar-track { background: transparent; }
+        .modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+        .modal-close { position: absolute; top: 20px; right: 20px; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .modal-close:hover { background: var(--ink); color: white; border-color: var(--ink); }
+        .modal-close .material-icons-round { font-size: 18px; }
+        .modal-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; padding-right: 40px; }
+        .modal-icon { flex-shrink: 0; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: var(--bg2); }
+        .modal-icon .material-icons-round { font-size: 30px; color: var(--ink2); }
+        .modal-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--ink); line-height: 1.2; margin-bottom: 6px; }
+        .modal-desc { font-size: 14px; color: var(--ink2); line-height: 1.6; }
+
+        /* Resource items */
+        .modal-resources { display: flex; flex-direction: column; gap: 10px; }
+        .resource-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1.5px solid var(--border); border-radius: 12px; text-decoration: none; color: var(--ink); transition: var(--transition); cursor: pointer; }
+        .resource-item:hover { border-color: var(--item-color, var(--accent)); background: var(--item-bg, #FEF3EE); transform: translateX(4px); }
+        .resource-type-badge { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--item-bg, #FEF3EE); }
+        .resource-type-badge .material-icons-round { font-size: 20px; color: var(--item-color, var(--accent)); }
+        .resource-label { flex: 1; font-size: 14px; font-weight: 500; }
+        .resource-type-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--item-color, var(--accent)); background: var(--item-bg, #FEF3EE); padding: 3px 8px; border-radius: 99px; }
+        .resource-open-icon { display: flex; align-items: center; }
+        .resource-open-icon .material-icons-round { font-size: 16px; color: var(--ink3); transition: var(--transition); }
+        .resource-item:hover .resource-open-icon .material-icons-round { color: var(--item-color, var(--accent)); transform: translate(2px, -2px); }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--ink3); }
+        .empty-state .material-icons-round { font-size: 52px; display: block; margin: 0 auto 16px; opacity: 0.35; }
+        .empty-state-text { font-size: 16px; }
+
+        /* Login panel */
+        .login-overlay{position:fixed;inset:0;background:rgba(26,23,20,0.65);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+        .login-box{background:var(--white);border-radius:24px;padding:40px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(26,23,20,0.2)}
+        .login-box h2{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:6px}
+        .login-box p{font-size:14px;color:var(--ink2);margin-bottom:28px;line-height:1.6}
+        .login-field{margin-bottom:16px}
+        .login-field label{display:block;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+        .login-field input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);outline:none;transition:var(--transition)}
+        .login-field input:focus{border-color:var(--accent);background:var(--white)}
+        .login-submit{width:100%;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:13px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:var(--transition);margin-top:4px}
+        .login-submit:hover{background:#A83E1F}
+        .login-submit:disabled{opacity:.5;cursor:default}
+        .login-err{font-size:13px;color:#DC2626;margin-top:10px;min-height:18px;text-align:center}
+        .login-close{display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--ink3);cursor:pointer;text-decoration:underline}
+        /* Promo banner */
+        .promo-banner{background:var(--ink);color:var(--white);padding:48px 32px;text-align:center}
+        .promo-banner h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,44px);margin-bottom:12px}
+        .promo-banner h2 em{font-style:italic;color:var(--accent)}
+        .promo-banner p{font-size:16px;color:#A89F96;max-width:520px;margin:0 auto 28px;line-height:1.7}
+        .promo-features{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:32px}
+        .promo-feat{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:50px;padding:8px 18px;font-size:13px;font-weight:500}
+        .promo-feat .material-icons-round{font-size:16px;color:var(--accent)}
+        .promo-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;padding:14px 32px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:var(--transition)}
+        .promo-btn:hover{background:#A83E1F;transform:translateY(-2px);box-shadow:0 8px 24px rgba(200,80,42,0.4)}
+        .promo-btn .material-icons-round{font-size:18px}
+        /* Header user info */
+        .user-pill{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1.5px solid var(--border);border-radius:50px;padding:6px 14px 6px 8px;font-size:13px;font-weight:500;color:var(--ink2)}
+        .user-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+        .logout-btn{background:none;border:1.5px solid var(--border);border-radius:50px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;transition:var(--transition)}
+        .logout-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .hidden{display:none!important}
+
+        @media (max-width: 640px) {
+            .header-inner { padding: 0 16px; }
+            .hero { padding: 48px 16px 56px; }
+            .cat-nav { padding: 0 16px; }
+            .main { padding: 32px 16px 60px; }
+            .modal { padding: 28px 20px; }
+            .btn-label { display: none; }
+            .add-btn { padding: 10px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="material-icons-round">school</span>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-name" id="orgName"></span>
+                    <span class="logo-sub" id="orgTagline"></span>
+                </div>
+            </div>
+            <div id="headerActions" style="display:flex;align-items:center;gap:10px">
+                <div id="userPill" class="user-pill hidden"></div>
+                <button class="logout-btn hidden" id="logoutBtn">Sign out</button>
+                <button class="add-btn" id="addResourceBtn">
+                    <span class="material-icons-round">add_circle</span>
+                    <span class="btn-label">Add Resource</span>
+                </button>
+                <button class="add-btn" id="loginBtn" style="background:var(--ink)">
+                    <span class="material-icons-round">lock_open</span>
+                    <span class="btn-label">Sign In</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-inner">
+            <p class="hero-label">Knowledge at your fingertips</p>
+            <h1 class="hero-title">Resource <em>Center</em></h1>
+            <p class="hero-desc">Browse curated materials across all departments. Click any card to explore books, slides, documents and more.</p>
+        </div>
+        <div class="hero-shapes">
+            <div class="shape s1"></div>
+            <div class="shape s2"></div>
+            <div class="shape s3"></div>
+        </div>
+    </section>
+
+    <nav class="cat-nav" id="catNav"></nav>
+    <main class="main" id="mainContent"></main>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <button class="modal-close" id="modalClose">
+                <span class="material-icons-round">close</span>
+            </button>
+            <div class="modal-header">
+                <div class="modal-icon" id="modalIcon"></div>
+                <div>
+                    <h2 class="modal-title" id="modalTitle"></h2>
+                    <p class="modal-desc" id="modalDesc"></p>
+                </div>
+            </div>
+            <div class="modal-resources" id="modalResources"></div>
+        </div>
+    </div>
+
+    <!-- Promo banner shown to guests -->
+    <div id="promoBanner" class="promo-banner hidden">
+        <h2>Unlock <em>All Resources</em></h2>
+        <p>Join EduHub to get instant access to study materials, past papers, lecture slides and more for FAST, NUST, ECAT and MDCAT.</p>
+        <div class="promo-features">
+            <div class="promo-feat"><span class="material-icons-round">school</span> FAST Materials</div>
+            <div class="promo-feat"><span class="material-icons-round">menu_book</span> NUST Resources</div>
+            <div class="promo-feat"><span class="material-icons-round">explore</span> ECAT Prep</div>
+            <div class="promo-feat"><span class="material-icons-round">science</span> MDCAT Guides</div>
+            <div class="promo-feat"><span class="material-icons-round">co_present</span> Lecture Slides</div>
+            <div class="promo-feat"><span class="material-icons-round">edit_note</span> Past Papers</div>
+        </div>
+        <button class="promo-btn" onclick="showLogin()">
+            <span class="material-icons-round">lock_open</span> Sign In to Access
+        </button>
+    </div>
+
+    <!-- Login overlay -->
+    <div class="login-overlay hidden" id="loginOverlay">
+        <div class="login-box">
+            <h2>Welcome Back</h2>
+            <p>Sign in with your EduMark student, teacher or admin account to access all resources.</p>
+            <div class="login-field">
+                <label>Email / Roll Number</label>
+                <input type="text" id="loginInput" placeholder="e.g. AB26-001 or teacher@email.com"/>
+            </div>
+            <div class="login-field">
+                <label>Password</label>
+                <input type="password" id="loginPw" placeholder="Your password"/>
+            </div>
+            <div class="login-err" id="loginErr"></div>
+            <button class="login-submit" id="loginSubmit" onclick="doLogin()">Sign In</button>
+            <span class="login-close" onclick="hideLogin()">Cancel</span>
+        </div>
+    </div>
+
+    <script>
+    const ADD_RESOURCE_URL = "https://docs.google.com/forms/d/e/1FAIpQLScT1usyapAbN__5ltjIewpvJDmi_gQlAWV-t9ukwp8WkWnbvA/viewform?usp=publish-editor";
+    const ORG_NAME    = "EduHub";
+    const ORG_TAGLINE = "Resource Center";
+
+    document.getElementById("orgName").textContent    = ORG_NAME;
+    document.getElementById("orgTagline").textContent = ORG_TAGLINE;
+    document.title = `${ORG_NAME} — ${ORG_TAGLINE}`;
+
+    // ── Resource type → icon + color ─────────────────────────────
+    const TYPE_META = {
+        book:   { icon: "menu_book",      label: "Book",   color: "#4F46E5", bg: "#EEF2FF" },
+        slides: { icon: "co_present",     label: "Slides", color: "#059669", bg: "#ECFDF5" },
+        video:  { icon: "play_circle",    label: "Video",  color: "#DC2626", bg: "#FEF2F2" },
+        doc:    { icon: "description",    label: "Doc",    color: "#D97706", bg: "#FFFBEB" },
+        pdf:    { icon: "picture_as_pdf", label: "PDF",    color: "#7C3AED", bg: "#F5F3FF" },
+        link:   { icon: "open_in_new",    label: "Link",   color: "#0891B2", bg: "#ECFEFF" },
+    };
+    function icon(name, size) {
+        return `<span class="material-icons-round" style="${size ? `font-size:${size}px` : ''}">${name}</span>`;
+    }
+    function getTypeMeta(type) { return TYPE_META[type] || TYPE_META["link"]; }
+
+    // ── Supabase ──────────────────────────────────────────────────
+    const SUPABASE_URL  = 'https://fxhmiryfpxinwlmevqev.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4aG1pcnlmcHhpbndsbWV2cWV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMTE4MTYsImV4cCI6MjA4Nzc4NzgxNn0.Pw82Om1-tvGUcwN75EklMwhtxdwwjvgjSxcHO9f4kWU';
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    let currentUser = null;
+    let _categories = []; // cached after fetch
+
+    // ── Auth ──────────────────────────────────────────────────────
+    function showLogin(){ document.getElementById('loginOverlay').classList.remove('hidden'); document.getElementById('loginInput').focus(); }
+    function hideLogin(){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('loginErr').textContent=''; }
+
+    async function doLogin(){
+        const raw = document.getElementById('loginInput').value.trim();
+        const pw  = document.getElementById('loginPw').value;
+        const err = document.getElementById('loginErr');
+        err.textContent = '';
+        if(!raw||!pw){err.textContent='Fill all fields';return;}
+        const btn = document.getElementById('loginSubmit');
+        btn.disabled=true; btn.textContent='Signing in…';
+        const email = /^[A-Za-z]{2}\d{2}-\d{3}$/i.test(raw) ? raw.toLowerCase()+'@student.local' : raw;
+        const{data,error} = await db.auth.signInWithPassword({email,password:pw});
+        btn.disabled=false; btn.textContent='Sign In';
+        if(error){err.textContent='Invalid credentials. Please try again.';return;}
+        currentUser = data.user;
+        hideLogin();
+        await applyAuthState(true);
+    }
+
+    async function doLogout(){
+        await db.auth.signOut();
+        currentUser = null;
+        _categories = [];
+        await applyAuthState(false);
+    }
+
+    async function applyAuthState(loggedIn){
+        const catNav      = document.getElementById('catNav');
+        const mainContent = document.getElementById('mainContent');
+        const promoBanner = document.getElementById('promoBanner');
+        const userPill    = document.getElementById('userPill');
+        const logoutBtn   = document.getElementById('logoutBtn');
+        const loginBtn    = document.getElementById('loginBtn');
+
+        if(loggedIn){
+            promoBanner.classList.add('hidden');
+            loginBtn.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+            userPill.classList.remove('hidden');
+            const role  = currentUser?.app_metadata?.role;
+            const email = currentUser?.email||'';
+            const label = email.endsWith('@student.local') ? 'Student' : role==='admin' ? 'Admin' : 'Teacher';
+            userPill.innerHTML = `<div class="user-dot"></div> ${label}`;
+            // Fetch from DB and build nav + content
+            await loadAndRender();
+        } else {
+            catNav.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            promoBanner.classList.remove('hidden');
+            loginBtn.classList.remove('hidden');
+            logoutBtn.classList.add('hidden');
+            userPill.classList.add('hidden');
+            catNav.innerHTML = '';
+            mainContent.innerHTML = '';
+        }
+    }
+
+    // ── Fetch from Supabase ───────────────────────────────────────
+    async function loadAndRender(){
+        const catNav    = document.getElementById('catNav');
+        const mainContent = document.getElementById('mainContent');
+        catNav.classList.remove('hidden');
+        mainContent.classList.remove('hidden');
+        mainContent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:5rem;gap:.8rem;color:#9A948E;font-size:14px"><span style="width:18px;height:18px;border:2px solid #D8D3CB;border-top-color:#C8502A;border-radius:50%;animation:spin .6s linear infinite;display:inline-block"></span> Loading resources…</div>`;
+
+        // Fetch all categories with their cards and items in one go
+        const{data:cats, error} = await db
+            .from('resource_categories')
+            .select(`id, label, icon, color, sort_order,
+                     resource_cards (id, title, description, icon, sort_order,
+                       resource_items (id, label, type, url, sort_order))`)
+            .order('sort_order');
+
+        if(error){
+            mainContent.innerHTML=`<div style="text-align:center;padding:4rem;color:#DC2626">${error.message}</div>`;
+            return;
+        }
+
+        // Sort nested items
+        _categories = (cats||[]).map(cat=>({
+            ...cat,
+            resource_cards: (cat.resource_cards||[])
+                .sort((a,b)=>a.sort_order-b.sort_order)
+                .map(card=>({
+                    ...card,
+                    resource_items: (card.resource_items||[]).sort((a,b)=>a.sort_order-b.sort_order)
+                }))
+        }));
+
+        if(_categories.length===0){
+            catNav.innerHTML='';
+            mainContent.innerHTML='<div style="text-align:center;padding:5rem;color:#9A948E;font-size:15px">No resources available yet.</div>';
+            return;
+        }
+
+        // Build category nav
+        catNav.innerHTML='';
+        _categories.forEach((cat,i)=>{
+            const btn = document.createElement('button');
+            btn.className = 'cat-tab' + (i===0?' active':'');
+            btn.innerHTML = `${icon(cat.icon)} ${cat.label}`;
+            if(i===0){btn.style.borderBottomColor=cat.color;btn.style.color=cat.color;}
+            btn.addEventListener('click',()=>{
+                document.querySelectorAll('.cat-tab').forEach(t=>{
+                    t.classList.remove('active');
+                    t.style.borderBottomColor='transparent';
+                    t.style.color='';
+                });
+                btn.classList.add('active');
+                btn.style.borderBottomColor=cat.color;
+                btn.style.color=cat.color;
+                renderSection(cat.id);
+            });
+            catNav.appendChild(btn);
+        });
+
+        renderSection(_categories[0].id);
+    }
+
+    // ── Section render ────────────────────────────────────────────
+    function renderSection(catId){
+        const main = document.getElementById('mainContent');
+        const cat  = _categories.find(c=>c.id===catId);
+        if(!cat)return;
+        main.innerHTML='';
+
+        const header = document.createElement('div');
+        header.className='section-header';
+        header.innerHTML=`
+            <h2 class="section-title" style="color:${cat.color}">
+                ${icon(cat.icon,28)} ${cat.label}
+            </h2>
+            <span class="section-count">${cat.resource_cards.length} resource${cat.resource_cards.length!==1?'s':''}</span>`;
+        main.appendChild(header);
+
+        if(!cat.resource_cards.length){
+            main.innerHTML+=`<div class="empty-state">${icon('inbox',52)}<p class="empty-state-text">No resources yet.</p></div>`;
+            return;
+        }
+
+        const grid=document.createElement('div');
+        grid.className='cards-grid';
+        cat.resource_cards.forEach(card=>grid.appendChild(buildCard(card,cat.color)));
+        main.appendChild(grid);
+
+        requestAnimationFrame(()=>{
+            document.querySelectorAll('.card').forEach((el,i)=>{
+                el.style.opacity='0';
+                el.style.transform='translateY(18px)';
+                setTimeout(()=>{
+                    el.style.transition='opacity 0.3s ease, transform 0.3s ease';
+                    el.style.opacity='1';
+                    el.style.transform='translateY(0)';
+                },i*60);
+            });
+        });
+    }
+
+    // ── Build card ────────────────────────────────────────────────
+    function buildCard(card,catColor){
+        const el=document.createElement('div');
+        el.className='card';
+        el.style.setProperty('--card-color',catColor);
+        el.style.setProperty('--card-color-light',catColor+'15');
+        el.innerHTML=`
+            <div class="card-icon-wrap">${icon(card.icon,26)}</div>
+            <h3 class="card-title">${card.title}</h3>
+            <p class="card-desc">${card.description}</p>
+            <div class="card-footer">
+                <span class="card-res-count">${icon('folder_open',15)} ${card.resource_items.length} file${card.resource_items.length!==1?'s':''}</span>
+                <div class="card-arrow">${icon('arrow_forward',16)}</div>
+            </div>`;
+        el.addEventListener('click',()=>openModal(card));
+        return el;
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────
+    document.getElementById('modalClose').addEventListener('click',closeModal);
+    document.getElementById('modalOverlay').addEventListener('click',e=>{
+        if(e.target===document.getElementById('modalOverlay'))closeModal();
+    });
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+    function openModal(card){
+        document.getElementById('modalIcon').innerHTML=icon(card.icon,30);
+        document.getElementById('modalTitle').textContent=card.title;
+        document.getElementById('modalDesc').textContent=card.description;
+        const container=document.getElementById('modalResources');
+        container.innerHTML='';
+        card.resource_items.forEach(res=>container.appendChild(buildResourceItem(res)));
+        document.getElementById('modalOverlay').classList.add('open');
+        document.body.style.overflow='hidden';
+    }
+    function closeModal(){
+        document.getElementById('modalOverlay').classList.remove('open');
+        document.body.style.overflow='';
+    }
+
+    // ── Resource item ─────────────────────────────────────────────
+    function buildResourceItem(res){
+        const meta=getTypeMeta(res.type);
+        const a=document.createElement('a');
+        a.className='resource-item';
+        a.href=res.url;
+        a.target='_blank';
+        a.rel='noopener noreferrer';
+        a.style.setProperty('--item-color',meta.color);
+        a.style.setProperty('--item-bg',meta.bg);
+        a.innerHTML=`
+            <div class="resource-type-badge">${icon(meta.icon,20)}</div>
+            <span class="resource-label">${res.label}</span>
+            <span class="resource-type-tag">${meta.label}</span>
+            <span class="resource-open-icon">${icon('open_in_new',16)}</span>`;
+        return a;
+    }
+
+    // ── Button listeners ──────────────────────────────────────────
+    document.getElementById('addResourceBtn').addEventListener('click',()=>window.open(ADD_RESOURCE_URL,'_blank'));
+    document.getElementById('loginBtn').addEventListener('click',showLogin);
+    document.getElementById('logoutBtn').addEventListener('click',doLogout);
+    document.getElementById('loginOverlay').addEventListener('click',e=>{
+        if(e.target===document.getElementById('loginOverlay'))hideLogin();
+    });
+    document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+    // ── Spin keyframe ─────────────────────────────────────────────
+    const spinStyle=document.createElement('style');
+    spinStyle.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(spinStyle);
+
+    // ── Session check on load ─────────────────────────────────────
+    (async()=>{
+        const{data:{session}} = await db.auth.getSession();
+        if(session){ currentUser=session.user; await applyAuthState(true); }
+        else { await applyAuthState(false); }
+    })();
+    </script>
+</body>
+</html>
