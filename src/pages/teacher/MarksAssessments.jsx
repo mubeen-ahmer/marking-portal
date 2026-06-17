@@ -108,15 +108,23 @@ export default function MarksAssessments() {
   return (
     <div>
       <div className="pg-hd">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '.2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '.3rem' }}>
           <h2>Marks & Assessments</h2>
-          <span className="lock-badge">🔒 {subjectName}</span>
+          <span className="lock-badge" style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            {subjectName}
+          </span>
         </div>
         <p>Select a batch, add assessments, and enter marks.</p>
       </div>
 
       {batches.length === 0 ? (
-        <div className="empty"><div className="ei">📭</div><p>No batches assigned to you yet. Contact admin.</p></div>
+        <div className="empty">
+          <div className="ei" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: 'var(--text3)' }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </div>
+          <p>No batches assigned to you yet. Contact admin.</p>
+        </div>
       ) : (
         <>
           <div className="batch-tabs">
@@ -128,7 +136,10 @@ export default function MarksAssessments() {
 
           <div className="section">
             <div className="section-hd">
-              <h3>📊 Assessments ({assessments.length})</h3>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Assessments ({assessments.length})
+              </h3>
               <div style={{ display: 'flex', gap: '.5rem' }}>
                 {dirtyCount > 0 && (
                   <button className="btn btn-primary btn-sm" onClick={saveMarks} disabled={saving}>

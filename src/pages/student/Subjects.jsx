@@ -31,10 +31,16 @@ export default function Subjects() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
           {subjects.map(s => (
             <div key={s.id} className="rc-card" onClick={() => navigate(`/student/subjects/${s.id}`)}>
-              <h4>📖 {s.name}</h4>
-              <p>View marks & assessments</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.25rem' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--blue-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <h4>{s.name}</h4>
+              </div>
+              <p>View marks &amp; assessments →</p>
             </div>
           ))}
+
         </div>
       )}
     </div>

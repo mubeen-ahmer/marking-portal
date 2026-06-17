@@ -7,7 +7,10 @@ import Login from './pages/Login';
 import Batches from './pages/admin/Batches';
 import Students from './pages/admin/Students';
 import Teachers from './pages/admin/Teachers';
-import Resources from './pages/admin/Resources';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import BatchesAdminResources from './pages/admin/Resources';
+
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import MarksAssessments from './pages/teacher/MarksAssessments';
 import TeacherQuizzes from './pages/teacher/Quizzes';
 import TeacherPassword from './pages/teacher/ChangePassword';
@@ -28,21 +31,31 @@ export default function App() {
             <Route path="/resources" element={<ResourceCenter />} />
 
             {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Layout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="batches" replace />} />
-              <Route path="batches" element={<Batches />} />
-              <Route path="students" element={<Students />} />
-              <Route path="teachers" element={<Teachers />} />
-              <Route path="resources" element={<Resources />} />
-            </Route>
+            <Route path="/admin" element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="batches" element={<Batches />} />
+            <Route path="students" element={<Students />} />
+            <Route path="teachers" element={<Teachers />} />
+            <Route path="resources" element={<BatchesAdminResources />} />
+          </Route>
 
-            {/* Teacher routes */}
-            <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><Layout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="marks" replace />} />
-              <Route path="marks" element={<MarksAssessments />} />
-              <Route path="quizzes" element={<TeacherQuizzes />} />
-              <Route path="password" element={<TeacherPassword />} />
-            </Route>
+          {/* TEACHER ROUTES */}
+          <Route path="/teacher" element={
+            <ProtectedRoute requiredRole="teacher">
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/teacher/dashboard" replace />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="marks" element={<MarksAssessments />} />
+            <Route path="quizzes" element={<TeacherQuizzes />} />
+            <Route path="password" element={<TeacherPassword />} />
+          </Route>
 
             {/* Student routes */}
             <Route path="/student" element={<ProtectedRoute allowedRoles={['student']}><Layout /></ProtectedRoute>}>

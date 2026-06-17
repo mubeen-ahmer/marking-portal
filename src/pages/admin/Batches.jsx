@@ -19,6 +19,7 @@ export default function Batches() {
   const [modal, setModal] = useState(null); // 'create' | null
   const [form, setForm] = useState({ name: '', course: '', year: new Date().getFullYear() });
   const [err, setErr] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,17 +68,32 @@ export default function Batches() {
       <div className="tbl-card">
         <div className="tbl-hd">
           <h3>All Batches</h3>
-          <button className="btn btn-primary btn-sm" onClick={() => setModal('create')}>+ Create Batch</button>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <select 
+              value={yearFilter} 
+              onChange={e => setYearFilter(e.target.value)} 
+              style={{ padding: '.3rem .6rem', borderRadius: 'var(--r)', border: '1px solid var(--border)', fontSize: '.85rem' }}
+            >
+              <option value="">All Years</option>
+              {Array.from(new Set(batches.map(b => b.year))).sort((a,b) => b - a).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button className="btn btn-primary btn-sm" onClick={() => setModal('create')}>+ Create Batch</button>
+          </div>
         </div>
         <table>
           <thead><tr><th>Batch Name</th><th>Course</th><th>Year</th><th className="c">Students</th><th>Created</th></tr></thead>
           <tbody>
-            {batches.length === 0 ? (
+            {(yearFilter ? batches.filter(b => b.year.toString() === yearFilter) : batches).length === 0 ? (
               <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text3)' }}>No batches yet.</td></tr>
-            ) : batches.map(b => (
+            ) : (yearFilter ? batches.filter(b => b.year.toString() === yearFilter) : batches).map(b => (
               <React.Fragment key={b.id}>
                 <tr className={`batch-row ${expanded === b.id ? 'open' : ''}`} onClick={() => toggleExpand(b.id)}>
-                  <td><span className="expand-arrow">▶</span><strong>{b.name}</strong></td>
+                  <td>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="expand-arrow" style={{ marginRight: '.4rem', transition: 'transform 0.2s', transform: expanded === b.id ? 'rotate(90deg)' : 'rotate(0deg)' }}><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <strong>{b.name}</strong>
+                  </td>
                   <td><span className="tag tag-blue">{b.courses?.name || '—'}</span></td>
                   <td style={{ fontFamily: 'var(--fm)', fontSize: '.78rem' }}>{b.year}</td>
                   <td className="c">{b.studentCount}</td>

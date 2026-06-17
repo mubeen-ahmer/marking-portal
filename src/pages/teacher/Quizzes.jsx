@@ -282,10 +282,15 @@ export default function Quizzes() {
                 setModal('create'); setErr('');
               }}>+ New Quiz</button>
             </div>
+            {quizzes.length === 0 ? <div className="empty" style={{ padding: '4rem 2rem' }}>
+            <div className="ei" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: 'var(--text3)' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            No quizzes created yet.
+            </div> : (
             <table><thead><tr><th>Title</th><th>Batch</th><th>Time</th><th>Expires</th><th>Published?</th><th>Actions</th></tr></thead>
               <tbody>
-                {quizzes.length === 0 ? <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text3)' }}>No quizzes yet</td></tr> :
-                  quizzes.map(q => {
+                {quizzes.map(q => {
                     const isExpired = new Date(q.expires_at) < new Date();
                     return (
                     <tr key={q.id}>
@@ -303,30 +308,49 @@ export default function Quizzes() {
                       </td>
                     </tr>
                     );
-                  })
-                }
+                  })}
               </tbody>
             </table>
+            )}
           </div>
         </>
       )}
 
       {view === 'questions' && (
         <>
-          <div className="pg-hd">
-            <button className="btn btn-outline btn-sm" style={{ marginBottom: '.6rem' }} onClick={() => { setView('list'); init(); }}>← Back to Quizzes</button>
-            <h2>Questions — {activeQuiz?.title}</h2>
+          <div className="print-only" style={{ padding: '0 0 2rem', marginBottom: '2rem', borderBottom: '2px solid #000' }}>
+            <h1 style={{ fontFamily: 'var(--fo)', fontSize: '2.2rem', marginBottom: '1.2rem', letterSpacing: '-0.02em', color: '#000' }}>EduMark Official Assessment</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '1rem', color: '#000' }}>
+              <div><strong>Quiz Title:</strong> {activeQuiz?.title}</div>
+              <div><strong>Subject Name:</strong> {activeQuiz?.subjects?.name || 'Assigned Subject'}</div>
+              <div><strong>Time Limit:</strong> {activeQuiz?.time_limit_mins} Minutes</div>
+              <div><strong>Total Questions:</strong> {questions.length}</div>
+              <div><strong>Student Name:</strong> ________________________</div>
+              <div><strong>Roll Number:</strong> ________________________</div>
+              <div><strong>Date:</strong> ________________________</div>
+              <div><strong>Marks Obtained:</strong> ______ / {questions.length}</div>
+            </div>
+          </div>
+          <div className="pg-hd hide-on-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <button className="btn btn-outline btn-sm hide-on-print" style={{ marginBottom: '.6rem' }} onClick={() => { setView('list'); init(); }}>← Back to Quizzes</button>
+              <h2>Questions — {activeQuiz?.title}</h2>
+            </div>
+            <button className="btn btn-outline btn-sm hide-on-print" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:'.4rem'}}><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              Download PDF
+            </button>
           </div>
           {/* CSV Drop Zone */}
           <div
-            className={`csv-drop${dragging ? ' csv-drop-active' : ''}`}
+            className={`csv-drop hide-on-print ${dragging ? ' csv-drop-active' : ''}`}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => fileRef.current?.click()}
           >
             <input ref={fileRef} type="file" accept=".csv" hidden onChange={(e) => { handleCSVFile(e.target.files?.[0]); e.target.value = ''; }} />
-            <div style={{ fontSize: '2rem' }}>📄</div>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text3)', marginBottom: '.5rem' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             <div style={{ fontWeight: 600 }}>Drop CSV here, click to browse, or paste (Ctrl+V)</div>
             <div style={{ fontSize: '.76rem', color: 'var(--text3)', marginTop: '.3rem' }}>
               Format: question, option_a, option_b, option_c, option_d, correct_option (a/b/c/d)
@@ -334,11 +358,15 @@ export default function Quizzes() {
           </div>
 
           {/* AI conversion tip */}
-          <div style={{
+          <div className="hide-on-print" style={{
             background: 'var(--blue-light)', border: '1px solid rgba(29,78,216,.15)', borderRadius: 'var(--r2)',
             padding: '.8rem 1rem', marginBottom: '1.2rem', fontSize: '.78rem', color: 'var(--text2)', lineHeight: 1.65,
           }}>
-            <strong style={{ color: 'var(--blue)' }}>💡 Have a PDF or Word file?</strong> Copy the questions from it and give this prompt to any AI (ChatGPT, Gemini, etc.):
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', color: 'var(--blue)', marginBottom: '.2rem' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <strong>Have a PDF or Word file?</strong>
+            </div>
+            Copy the questions from it and give this prompt to any AI (ChatGPT, Gemini, etc.):
             <div style={{
               background: 'var(--white)', border: '1px solid var(--border)', borderRadius: 'var(--r)',
               padding: '.5rem .7rem', marginTop: '.5rem', fontFamily: 'var(--fm)', fontSize: '.72rem',
@@ -352,19 +380,24 @@ export default function Quizzes() {
           </div>
 
           <div className="tbl-card">
-            <div className="tbl-hd"><h3>{questions.length} Questions</h3>
+            <div className="tbl-hd hide-on-print"><h3>{questions.length} Questions</h3>
               <button className="btn btn-primary btn-sm" onClick={() => {
                 setForm({ question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: '' });
                 setModal('question'); setErr('');
               }}>+ Add Question</button>
             </div>
-            {questions.length === 0 ? <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text3)' }}>No questions yet</div> :
+            {questions.length === 0 ? <div className="empty" style={{ padding: '4rem 2rem' }}>
+              <div className="ei" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: 'var(--text3)' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              </div>
+              No questions yet
+              </div> :
               <div style={{ padding: '1rem' }}>
                 {questions.map((q, i) => (
-                  <div key={q.id} style={{ background: 'var(--surf)', border: '1px solid var(--border)', borderRadius: 'var(--r2)', padding: '1rem', marginBottom: '.8rem' }}>
+                  <div key={q.id} className="quiz-question-card" style={{ background: 'var(--surf)', border: '1px solid var(--border)', borderRadius: 'var(--r2)', padding: '1rem', marginBottom: '.8rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.5rem' }}>
                       <strong>Q{i + 1}. {q.question_text}</strong>
-                      <button className="btn btn-danger btn-xs" onClick={() => deleteQuestion(q.id)}>✕</button>
+                      <button className="btn btn-danger btn-xs hide-on-print" onClick={() => deleteQuestion(q.id)}>✕</button>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.4rem', fontSize: '.82rem' }}>
                       {['a', 'b', 'c', 'd'].map(opt => (
@@ -391,24 +424,30 @@ export default function Quizzes() {
             <div className="tbl-hd"><h3>{results.length} Submissions</h3>
               <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
                 {activeQuiz?.pushed_to_assessments ? (
-                  <span className="tag tag-green">✓ Published — Assessment created</span>
+                  <span className="tag tag-green" style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Published — Assessment created
+                  </span>
                 ) : (
                   <button className="btn btn-primary btn-sm" onClick={publishResults}
                     disabled={new Date(activeQuiz?.expires_at) > new Date() || results.length === 0}
-                    title={new Date(activeQuiz?.expires_at) > new Date() ? 'Wait for quiz to expire' : ''}>
-                    📢 Publish Results
+                    title={new Date(activeQuiz?.expires_at) > new Date() ? 'Wait for quiz to expire' : ''}
+                    style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                    Publish Results
                   </button>
                 )}
               </div>
             </div>
             {!activeQuiz?.pushed_to_assessments && new Date(activeQuiz?.expires_at) > new Date() && (
-              <div style={{ padding: '.6rem 1.2rem', background: 'var(--amber-bg)', borderBottom: '1px solid var(--border)', fontSize: '.78rem', color: 'var(--amber)' }}>
-                ⏳ Results can be published after the quiz expires ({new Date(activeQuiz?.expires_at).toLocaleString()})
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '1rem 1.5rem', background: 'var(--amber-bg)', borderBottom: '1px solid var(--border)', fontSize: '.8rem', color: 'var(--amber)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Results can be published after the quiz expires ({new Date(activeQuiz?.expires_at).toLocaleString()})
               </div>
             )}
             <table><thead><tr><th>Roll No</th><th>Name</th><th className="c">Score</th><th className="c">Total</th><th className="c">%</th><th className="c">Violations</th><th>Submitted</th></tr></thead>
               <tbody>
-                {results.length === 0 ? <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text3)' }}>No submissions yet</td></tr> :
+                {results.length === 0 ? <tr><td colSpan={7} style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text3)' }}>No submissions yet.</td></tr> :
                   results.map(r => {
                     const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
                     return (
@@ -475,10 +514,16 @@ export default function Quizzes() {
 
       {/* CSV Preview Modal */}
       <Modal open={modal === 'csv-preview'} onClose={() => { setModal(null); setCsvData(null); }}>
-        <h3>📄 CSV Preview — {csvData?.fileName}</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          CSV Preview — {csvData?.fileName}
+        </h3>
         {csvData?.errors?.length > 0 && (
           <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 'var(--r)', padding: '.6rem .8rem', marginBottom: '.8rem', fontSize: '.78rem', color: 'var(--red)' }}>
-            <strong>⚠ {csvData.errors.length} error(s):</strong>
+            <strong style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              {csvData.errors.length} error(s):
+            </strong>
             <ul style={{ margin: '.3rem 0 0 1rem', padding: 0 }}>
               {csvData.errors.map((e, i) => <li key={i}>{e}</li>)}
             </ul>
