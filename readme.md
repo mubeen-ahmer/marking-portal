@@ -69,7 +69,7 @@ eduportal/
 # Screenshots
 
 ## Admin
-<img src="assets/admin_dashboard.png" alt="Admin Dashboard"  width="50%" height="50%" ><img src="assets/add_new_student.png" alt="add new student"  width="50%" height="50%" ><img src="assets/new_student.png" alt="new stud"  width="50%" height="50%" ><img src="assets/add_new_teacher.png" alt="add new teacher"  width="50%" height="50%" ><img src="assets/add_new_teacher2.png" alt="add new teacher2"  width="50%" height="50%" ><img src="assets/new_teacher.png" alt="new teacher"  width="50%" height="50%" ><img src="assets/admin_student.png" alt="admin student"  width="50%" height="50%" ><img src="assets/admin_teacher.png" alt="admin teacher"  width="50%" height="50%" ><img src="assets/admin_resource.png" alt="admin resource"  width="50%" height="50%" >
+<img src="assets/auth.png" alt="auth"  width="50%" height="50%" ><img src="assets/admin_dashboard.png" alt="Admin Dashboard"  width="50%" height="50%" ><img src="assets/add_new_student.png" alt="add new student"  width="50%" height="50%" ><img src="assets/new_student.png" alt="new stud"  width="50%" height="50%" ><img src="assets/add_new_teacher.png" alt="add new teacher"  width="50%" height="50%" ><img src="assets/add_new_teacher2.png" alt="add new teacher2"  width="50%" height="50%" ><img src="assets/new_teacher.png" alt="new teacher"  width="50%" height="50%" ><img src="assets/admin_student.png" alt="admin student"  width="50%" height="50%" ><img src="assets/admin_teacher.png" alt="admin teacher"  width="50%" height="50%" ><img src="assets/admin_resource.png" alt="admin resource"  width="50%" height="50%" >
 
 ---
 ## Student
